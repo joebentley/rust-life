@@ -1,4 +1,5 @@
 extern crate termion;
+extern crate rustlife;
 
 use std::io::{stdin, stdout, Write};
 use termion::event::{Event, Key};
