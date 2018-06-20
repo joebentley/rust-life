@@ -22,10 +22,11 @@ fn draw_board(board: &Board, camera: &Camera) {
             let world_point = camera.pos + Point::new(x, y);
             let (screen_x, screen_y): (u16, u16) = ((x + 1) as u16, (y + 1) as u16);
 
-            print!("{}", termion::cursor::Goto(screen_x, screen_y));
-
             match board.get_cell(world_point) {
-                Cell::Alive => { print!("x"); }
+                Cell::Alive => {
+                    print!("{}", termion::cursor::Goto(screen_x, screen_y));
+                    print!("x");
+                }
                 Cell::Dead => { }
             }
         }
@@ -46,6 +47,8 @@ pub fn run() {
 
     let camera = Camera { pos: Point::new(-10, -10), size: Point::from_tuple(termion::terminal_size().unwrap())};
 
+    print!("{}", termion::cursor::Hide);
+
     loop {
         draw_board(automaton.get_board(), &camera);
 
@@ -59,4 +62,6 @@ pub fn run() {
         automaton.step_next_generation();
         thread::sleep(Duration::from_millis(100));
     }
+
+    print!("{}", termion::cursor::Show);
 }
