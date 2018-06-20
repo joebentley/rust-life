@@ -9,7 +9,11 @@ fn main() {
     let stdin = stdin();
     let mut stdout = stdout().into_raw_mode().unwrap();
 
-    print!("{}{}hello", termion::clear::All, termion::cursor::Goto(5, 3));
+    print!(
+        "{}{}hello",
+        termion::clear::All,
+        termion::cursor::Goto(5, 3)
+    );
     stdout.flush().unwrap();
 
     for c in stdin.events() {
