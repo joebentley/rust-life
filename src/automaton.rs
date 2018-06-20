@@ -10,13 +10,17 @@ macro_rules! point {
 
 #[derive(Debug, Hash, PartialEq, Eq, Copy, Clone)]
 pub struct Point {
-    x: i32,
-    y: i32
+    pub x: i32,
+    pub y: i32
 }
 
 impl Point {
     pub fn new(x: i32, y: i32) -> Point {
         Point { x, y }
+    }
+
+    pub fn from_tuple<T : Into<i32>>(tup: (T, T)) -> Point {
+        Point { x: tup.0.into(), y: tup.1.into() }
     }
 }
 
