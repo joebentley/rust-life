@@ -1,5 +1,5 @@
-extern crate rustlife;
+extern crate rust_life;
 
 fn main() {
-    rustlife::interface::run();
+    rust_life::interface::run();
 }

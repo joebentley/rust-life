@@ -1,5 +1,5 @@
 [package]
-name = "rustlife"
+name = "rust-life"
 version = "0.1.0"
 authors = ["Joe Bentley <joebentley10@gmail.com>"]
 
