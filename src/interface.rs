@@ -3,6 +3,7 @@ extern crate termion;
 use std::io::{stdout, Read, Write};
 use std::thread;
 use std::time::Duration;
+use std::fs::File;
 
 use termion::raw::IntoRawMode;
 use termion::async_stdin;
@@ -39,13 +40,22 @@ fn example_board() -> Board {
     RleLoader::from_string(string).board
 }
 
-pub fn run() {
+fn load_board_from_file(filepath: &str) -> Board {
+    let f = File::open(filepath).unwrap();
+    RleLoader::from_reader(f).board
+}
+
+pub fn run(filepath: Option<&str>) {
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
     let mut stdin = async_stdin().bytes();
 
     let mut automaton = Automaton::new();
-    automaton.set_board(example_board());
+
+    automaton.set_board(match filepath {
+        Some(path) => load_board_from_file(&path),
+        None => example_board()
+    });
 
     let camera = Camera { pos: Point::new(-10, -10), size: Point::from_tuple(termion::terminal_size().unwrap())};
 

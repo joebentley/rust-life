@@ -1,4 +1,4 @@
-use std::io::{Read, BufReader, BufRead};
+use std::io::{Read};
 use regex::Regex;
 use automaton::{Board, Point, Cell};
 
@@ -10,30 +10,27 @@ pub struct RleLoader {
 
 impl RleLoader {
     pub fn from_string(string: &str) -> RleLoader {
-        let string_reader = BufReader::new(string.as_bytes());
-        RleLoader::from_reader(string_reader)
+        RleLoader::from_reader(string.as_bytes())
     }
 
-    pub fn from_reader<T : Read>(reader: T) -> RleLoader {
-        let mut buf = BufReader::new(reader);
-        let mut line = String::new();
-        buf.read_line(&mut line).unwrap();
-
-        let line = line.trim();
+    pub fn from_reader<T : Read>(mut reader: T) -> RleLoader {
+        let mut string = String::new();
+        reader.read_to_string(&mut string).unwrap();
 
         let re = Regex::new(r"x *= *(\d+), *y *= *(\d+)").unwrap();
 
-        let captures = re.captures(line).unwrap();
+        let captures = re.captures(&string).unwrap();
 
         let width: u32 = captures.get(1).unwrap().as_str().parse().unwrap();
         let height: u32 = captures.get(2).unwrap().as_str().parse().unwrap();
 
-        // Read rest into string
-        let mut string = String::new();
-        buf.read_to_string(&mut string).unwrap();
+        let end_of_match_index = captures.get(2).unwrap().end();
+
+        let string = string.get(end_of_match_index..).unwrap();
+        let string = string.split("\n").nth(1).unwrap(); // Get rest of data
 
         let re = Regex::new(r"([\s\S]*)!").unwrap();
-        let data = re.captures(&string).unwrap().get(1).unwrap().as_str().replace(r"\n", "");
+        let data = re.captures(string).unwrap().get(1).unwrap().as_str().replace(r"\n", "");
 
         let mut p = Point::new(0, 0);
         let mut board = Board::new();
