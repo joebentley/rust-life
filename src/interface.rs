@@ -21,7 +21,7 @@ fn draw_board(board: &Board, camera: &Camera) {
 
     for y in 0 .. camera.size.y - 1 {
         for x in 0 .. camera.size.x - 1 {
-            let world_point = camera.pos + Point::new(x, y);
+            let world_point = camera.pos + point!(x, y);
             let (screen_x, screen_y): (u16, u16) = ((x + 1) as u16, (y + 1) as u16);
 
             match board.get_cell(world_point) {
@@ -57,7 +57,7 @@ pub fn run(filepath: Option<&str>) {
         None => example_board()
     });
 
-    let camera = Camera { pos: Point::new(-10, -10), size: Point::from_tuple(termion::terminal_size().unwrap())};
+    let camera = Camera { pos: point!(-9, -9), size: Point::from_tuple(termion::terminal_size().unwrap())};
 
     print!("{}", termion::cursor::Hide);
 
@@ -71,6 +71,8 @@ pub fn run(filepath: Option<&str>) {
             Some(Ok(b's')) => automaton.step_next_generation(),
             _ => {}
         }
+
+        automaton.step_next_generation();
 
         stdout.flush().unwrap();
         thread::sleep(Duration::from_millis(100));

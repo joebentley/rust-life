@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::iter::FromIterator;
 use std::ops::{Add, AddAssign};
 
 #[macro_export]
@@ -100,13 +101,7 @@ impl Board {
             Point::new(-1,  1), Point::new( 0,  1), Point::new( 1,  1)
         ];
 
-        let mut set = HashSet::new();
-
-        for offset in neighbour_offsets {
-            set.insert(p + offset);
-        }
-
-        set
+        HashSet::from_iter(neighbour_offsets.iter().map(|&offset| { p + offset }))
     }
 
     pub fn get_living_neighbours(&self, p: Point) -> HashSet<Point> {
@@ -122,6 +117,7 @@ impl Board {
 
         // TODO: double loop, slow?
         for &point in self.living_cells.iter() {
+            to_be_checked.insert((point, Cell::Alive));
             for neighbour_point in self.get_neighbours(point) {
                 to_be_checked.insert((neighbour_point, self.get_cell(neighbour_point)));
             }
@@ -193,7 +189,6 @@ mod tests {
     #[test]
     fn board_should_initially_have_no_living_cells() {
         let board = Board::new();
-
         assert_eq!(board.num_living(), 0);
     }
 
@@ -229,6 +224,14 @@ mod tests {
     }
 
     #[test]
+    fn get_living_neighbours_should_be_zero_for_no_neighbours() {
+        let mut board = Board::new();
+        let p = point!(1, 0);
+        board.set_cell(p, Cell::Alive);
+        assert_eq!(board.get_living_neighbours(p).len(), 0);
+    }
+
+    #[test]
     fn to_be_checked_includes_dead_neighbours() {
         let mut board = Board::new();
         board.add_cells(vec![point!(2, 0), point!(3, 0)]);
@@ -256,5 +259,13 @@ mod tests {
         ]);
 
         assert_eq!(automaton.get_board().living_cells(), &expected);
+    }
+
+    #[test]
+    fn test_lone_cell_should_die_next_generation() {
+        let mut automaton = Automaton::new();
+        automaton.get_board_mut().set_cell(point!(2, 2), Cell::Alive);
+        automaton.step_next_generation();
+        assert_eq!(automaton.get_board().get_cell(point!(2, 2)), Cell::Dead);
     }
 }
