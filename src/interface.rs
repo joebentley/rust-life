@@ -66,12 +66,13 @@ pub fn run(filepath: Option<&str>) {
 
         let b = stdin.next();
 
-        if let Some(Ok(b'q')) = b {
-            break;
+        match b {
+            Some(Ok(b'q')) => break,
+            Some(Ok(b's')) => automaton.step_next_generation(),
+            _ => {}
         }
 
         stdout.flush().unwrap();
-        automaton.step_next_generation();
         thread::sleep(Duration::from_millis(100));
     }
 
