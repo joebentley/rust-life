@@ -6,3 +6,4 @@ patterns: http://www.conwaylife.com/wiki/Main_Page
 ### TODO
 
 * Use nom for parsing
+* Allow stepping through generations
