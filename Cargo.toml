@@ -5,3 +5,4 @@ authors = ["Joe Bentley <joebentley10@gmail.com>"]
 
 [dependencies]
 termion = "*"
+regex = "1.0.0"

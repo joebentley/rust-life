@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::ops::Add;
+use std::ops::{Add, AddAssign};
 
 #[macro_export]
 macro_rules! point {
@@ -26,13 +26,21 @@ impl Point {
 
 impl Add for Point {
     type Output = Point;
-
     fn add(self, other: Point) -> Point {
         Point { x: self.x + other.x, y: self.y + other.y }
     }
 }
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+impl AddAssign for Point {
+    fn add_assign(&mut self, other: Point) {
+        *self = Point {
+            x: self.x + other.x,
+            y: self.y + other.y
+        };
+    }
+}
+
+#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
 pub enum Cell {
     Dead,
     Alive,
@@ -132,6 +140,10 @@ impl Automaton {
         Automaton {
             board: Board::new()
         }
+    }
+
+    pub fn set_board(&mut self, board: Board) {
+        self.board = board;
     }
 
     pub fn get_board(&self) -> &Board {

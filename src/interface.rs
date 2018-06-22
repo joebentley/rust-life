@@ -8,6 +8,7 @@ use termion::raw::IntoRawMode;
 use termion::async_stdin;
 
 use automaton::{Automaton, Board, Cell, Point};
+use loader::RleLoader;
 
 struct Camera {
     pos: Point,
@@ -33,17 +34,18 @@ fn draw_board(board: &Board, camera: &Camera) {
     }
 }
 
+fn example_board() -> Board {
+    let string = "x = 3, y = 4\nbo$2bo$3o!";
+    RleLoader::from_string(string).board
+}
+
 pub fn run() {
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
     let mut stdin = async_stdin().bytes();
 
     let mut automaton = Automaton::new();
-    automaton.get_board_mut().add_cells(vec![point!(1, 2), point!(2, 2), point!(3, 2)]);
-
-
-    automaton.get_board_mut().add_cells(vec![
-        point!(7, 7), point!(8, 7), point!(9, 7), point!(9, 6), point!(8, 5)]);
+    automaton.set_board(example_board());
 
     let camera = Camera { pos: Point::new(-10, -10), size: Point::from_tuple(termion::terminal_size().unwrap())};
 
