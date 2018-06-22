@@ -27,10 +27,14 @@ impl RleLoader {
         let end_of_match_index = captures.get(2).unwrap().end();
 
         let string = string.get(end_of_match_index..).unwrap();
-        let string = string.split("\n").nth(1).unwrap(); // Get rest of data
+        // Get rest of data
+        let mut split = string.split("\n");
+        split.next();
+        let lines: Vec<_> = split.collect();
+        let string = lines.concat().replace("\r", "");
 
         let re = Regex::new(r"([\s\S]*)!").unwrap();
-        let data = re.captures(string).unwrap().get(1).unwrap().as_str().replace(r"\n", "");
+        let data = re.captures(&string).unwrap().get(1).unwrap().as_str().replace(r"\n", "");
 
         let mut p = Point::new(0, 0);
         let mut board = Board::new();
@@ -41,7 +45,7 @@ impl RleLoader {
             for capture in matches {
                 let instruction = capture.get(0).unwrap().as_str();
 
-                let re = Regex::new(r"(\d)*(\w)").unwrap();
+                let re = Regex::new(r"(\d*)*(\w)").unwrap();
 
                 let count = match re.captures(instruction).unwrap().get(1) {
                     None => 1,
