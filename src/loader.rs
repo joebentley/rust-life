@@ -19,7 +19,7 @@ impl RleLoader {
         reader.read_to_string(&mut string).unwrap();
 
         named!(skip_comment<&str, &str>,
-            do_parse!(preceded!(opt!(call!(nom::space)), tag!("#")) >>
+            do_parse!(ws!(preceded!(opt!(call!(nom::space)), tag!("#"))) >>
                       many_till!(call!(nom::anychar), nom::line_ending) >> ("")));
 
         named!(skip_comments<&str, &str>,
@@ -103,7 +103,8 @@ mod tests {
 
     #[test]
     fn test_parsing_gosper_gun() {
-        let string = "#N Gosper glider gun
+        let string = "
+#N Gosper glider gun
 #O Bill Gosper
 #C A true period 30 glider gun.
 #C The first known gun and the first known finite pattern with unbounded growth.
