@@ -5,5 +5,7 @@ patterns: http://www.conwaylife.com/wiki/Main_Page
 
 ### TODO
 
-* Use nom for parsing
+* (DONE) Use nom for parsing
+    * Add proper error handling for parsing
+
 * Allow stepping through generations

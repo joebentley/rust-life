@@ -1,6 +1,7 @@
 use std::io::{Read};
-use regex::Regex;
 use automaton::{Board, Point, Cell};
+use nom;
+use std::str;
 
 pub struct RleLoader {
     pub width: u32,
@@ -17,51 +18,59 @@ impl RleLoader {
         let mut string = String::new();
         reader.read_to_string(&mut string).unwrap();
 
-        let re = Regex::new(r"x *= *(\d+), *y *= *(\d+)").unwrap();
+        named!(skip_comment<&str, &str>,
+            do_parse!(preceded!(opt!(call!(nom::space)), tag!("#")) >>
+                      many_till!(call!(nom::anychar), nom::line_ending) >> ("")));
 
-        let captures = re.captures(&string).unwrap();
+        named!(skip_comments<&str, &str>,
+            do_parse!(many0!(skip_comment) >> ("")));
 
-        let width: u32 = captures.get(1).unwrap().as_str().parse().unwrap();
-        let height: u32 = captures.get(2).unwrap().as_str().parse().unwrap();
+        let a = skip_comments(string.as_str());
 
-        let end_of_match_index = captures.get(2).unwrap().end();
+        named!(parse_number<&str, u32>,
+            map_res!(call!(nom::digit), |string: &str| string.parse() ));
 
-        let string = string.get(end_of_match_index..).unwrap();
-        // Get rest of data
-        let mut split = string.split("\n");
-        split.next();
-        let lines: Vec<_> = split.collect();
-        let string = lines.concat().replace("\r", "");
+        named!(parse_width_and_height<&str, (u32, u32)>,
+            complete!(
+            do_parse!(ws!(tag!("x =")) >> x: parse_number >> tag!(",") >>
+                      ws!(tag!("y =")) >> y: parse_number >> many_till!(call!(nom::anychar), nom::line_ending) >> (x, y))));
 
-        let re = Regex::new(r"([\s\S]*)!").unwrap();
-        let data = re.captures(&string).unwrap().get(1).unwrap().as_str().replace(r"\n", "");
+        let a = parse_width_and_height(a.unwrap().0);
+        let (rest, (width, height)) = a.unwrap();
 
-        let mut p = Point::new(0, 0);
+        #[derive(Debug)]
+        struct CountAndStatus {
+            count: u32,
+            status: Cell
+        }
+
+        named!(parse_cell<&str, CountAndStatus>,
+            do_parse!(
+            count: opt!(call!(nom::digit)) >>
+            status: alt!(tag!("b") | tag!("o")) >>
+            (CountAndStatus {
+                count: count.unwrap_or("1").parse().unwrap(),
+                status: if status == "b" { Cell::Dead } else { Cell::Alive }
+            })
+        ));
+
+        let data = rest.replace("\r\n", "");
+        let data = data.replace("\n", "");
+        let data = data.split("$");
+
+        let mut p = point!(0, 0);
         let mut board = Board::new();
 
-        for line in data.split("$") {
-            let re = Regex::new(r"(\d*(?:b|o){1})").unwrap();
-            let matches = re.captures_iter(line);
-            for capture in matches {
-                let instruction = capture.get(0).unwrap().as_str();
+        for line in data {
+            let mut remaining = line;
 
-                let re = Regex::new(r"(\d*)*(\w)").unwrap();
-
-                let count = match re.captures(instruction).unwrap().get(1) {
-                    None => 1,
-                    Some(m) => m.as_str().parse().unwrap()
-                };
-
-                let status = match re.captures(instruction).unwrap().get(2).unwrap().as_str() {
-                    "b" => Cell::Dead,
-                    "o" => Cell::Alive,
-                    _ => panic!("Bad cell type!")
-                };
-
-                for _ in 0..count {
-                    board.set_cell(p, status);
+            while let Ok((rem, count_and_status)) = parse_cell(remaining) {
+                for _ in 0..count_and_status.count {
+                    board.set_cell(p, count_and_status.status); // only need to do this for living cells really
                     p += point!(1, 0);
                 }
+
+                remaining = rem;
             }
 
             p.x = 0;
@@ -71,6 +80,7 @@ impl RleLoader {
         RleLoader { width, height, board }
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -93,9 +103,14 @@ mod tests {
 
     #[test]
     fn test_parsing_gosper_gun() {
-        let string = "x = 36, y = 9
-24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4b
-obo$10bo5bo7bo$11bo3bo$12b2o!";
+        let string = "#N Gosper glider gun
+#O Bill Gosper
+#C A true period 30 glider gun.
+#C The first known gun and the first known finite pattern with unbounded growth.
+#C www.conwaylife.com/wiki/index.php?title=Gosper_glider_gun
+x = 36, y = 9, rule = B3/S23
+24bo11b$22bobo11b$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o14b$2o8b
+o3bob2o4bobo11b$10bo5bo7bo11b$11bo3bo20b$12b2o!";
         let loader = RleLoader::from_string(string);
         assert_eq!(loader.board.num_living(), 36);
     }
